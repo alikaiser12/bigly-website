@@ -65,6 +65,8 @@ Harden admin + DB security
 - We added server API routes that validate the caller's access token and use the Supabase service role key to perform writes. For extra safety you should:
 	- Set `ADMIN_EMAILS` in Vercel to restrict which emails can write (the server API checks this list if present).
 	- Enable Row-Level Security (RLS) in your Supabase table and apply policies (see `sql/rls-sample.sql`).
+		- You can also create an `admins` table and manage admin emails there. We prefer this approach because it's manageable from the Supabase dashboard.
+			See `sql/create-admins-table.sql` to create the `admins` table and add your email.
 	- Keep `SUPABASE_SERVICE_ROLE_KEY` secret (Vercel project settings mark it as protected server-only).
 
 Ready for Vercel

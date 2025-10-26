@@ -16,10 +16,22 @@ export default async function handler(req, res) {
   if (userErr || !userData?.user) {
     return res.status(401).json({ error: userErr?.message || 'Unauthorized' })
   }
-  // Admin whitelist: optional comma-separated list of admin emails in env ADMIN_EMAILS
-  const adminList = (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim()).filter(Boolean)
-  if (adminList.length && !adminList.includes(userData.user.email)) {
-    return res.status(403).json({ error: 'Forbidden: user not in admin list' })
+  // Admin check flow: prefer `admins` table, fall back to ADMIN_EMAILS env var
+  try {
+    const { data: adminRow, error: adminErr } = await supabaseAdmin.from('admins').select('email').eq('email', userData.user.email).maybeSingle()
+    if (!adminErr && adminRow) {
+      // allowed
+    } else {
+      const adminList = (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim()).filter(Boolean)
+      if (adminList.length && !adminList.includes(userData.user.email)) {
+        return res.status(403).json({ error: 'Forbidden: user not in admin list' })
+      }
+    }
+  } catch (err) {
+    const adminList = (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim()).filter(Boolean)
+    if (adminList.length && !adminList.includes(userData.user.email)) {
+      return res.status(403).json({ error: 'Forbidden: user not in admin list' })
+    }
   }
   try {
     const { error } = await supabaseAdmin.from('courses').delete().eq('id', id)
