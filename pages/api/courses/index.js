@@ -16,6 +16,12 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: userErr?.message || 'Unauthorized' })
   }
 
+  // Admin whitelist: optional comma-separated list of admin emails in env ADMIN_EMAILS
+  const adminList = (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim()).filter(Boolean)
+  if (adminList.length && !adminList.includes(userData.user.email)) {
+    return res.status(403).json({ error: 'Forbidden: user not in admin list' })
+  }
+
   const payload = req.body
   try {
     const { data, error } = await supabaseAdmin.from('courses').insert(payload).select().single()

@@ -46,4 +46,29 @@ If you want, I can:
 - add a lightweight admin dashboard (using a config file or Supabase)
 - wire up Stripe for paid courses
 
+Seeding Supabase (quick preview)
+1. Create a `courses` table in Supabase with columns: `id` (primary), `title`, `slug`, `description`, `youtubeId`, `duration`, `level`, `category`, `thumbnail`, `inserted_at` (default now()).
+2. Set environment variables locally or in Vercel:
+	 - NEXT_PUBLIC_SUPABASE_URL
+	 - NEXT_PUBLIC_SUPABASE_ANON_KEY
+	 - SUPABASE_SERVICE_ROLE_KEY (keep this secret)
+	 - (optional) ADMIN_EMAILS (comma-separated emails allowed to manage courses)
+3. Run the seed script locally (it uses the service role key):
+
+```bash
+SUPABASE_SERVICE_ROLE_KEY=<your key> NEXT_PUBLIC_SUPABASE_URL=<your url> node scripts/seed-supabase.js
+```
+
+This will upsert the local sample courses into your Supabase `courses` table.
+
+Harden admin + DB security
+- We added server API routes that validate the caller's access token and use the Supabase service role key to perform writes. For extra safety you should:
+	- Set `ADMIN_EMAILS` in Vercel to restrict which emails can write (the server API checks this list if present).
+	- Enable Row-Level Security (RLS) in your Supabase table and apply policies (see `sql/rls-sample.sql`).
+	- Keep `SUPABASE_SERVICE_ROLE_KEY` secret (Vercel project settings mark it as protected server-only).
+
+Ready for Vercel
+- Push to GitHub (done). Import the repo in Vercel, set env vars above, and deploy. After deployment you can open the preview URL and test `/admin`.
+
+
 Enjoy — paste this repository into Vercel and it should deploy as a static Next.js app with SSR support.

@@ -16,7 +16,11 @@ export default async function handler(req, res) {
   if (userErr || !userData?.user) {
     return res.status(401).json({ error: userErr?.message || 'Unauthorized' })
   }
-
+  // Admin whitelist: optional comma-separated list of admin emails in env ADMIN_EMAILS
+  const adminList = (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim()).filter(Boolean)
+  if (adminList.length && !adminList.includes(userData.user.email)) {
+    return res.status(403).json({ error: 'Forbidden: user not in admin list' })
+  }
   try {
     const { error } = await supabaseAdmin.from('courses').delete().eq('id', id)
     if (error) return res.status(500).json({ error: error.message })
